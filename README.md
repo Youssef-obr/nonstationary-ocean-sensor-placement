@@ -108,6 +108,8 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \right)
 ```
 
+Equivalently, A2 replaces the isotropic Euclidean distance with a learned **Mahalanobis distance**, allowing different correlation scales along different spatial directions. A3 further generalizes this idea by making the effective distance geometry spatially non-stationary.
+
 This replaces circular covariance contours with a single learned ellipse over the whole domain.
 
 ### A3 — Non-stationary geometry
@@ -158,12 +160,12 @@ The final layer of $g_{\eta}$ is initialized to zero, so A3 starts from the A2 s
 
 Experiments use 25 SSH states sampled throughout the NATL60 year, with the same 0.1% observation-budget setting and reconstruction protocol used for the baseline comparison.
 
-| Method | RMSE (m) ↓ | EV ↑ | Sensors |
+| Method | RMSE (m) ↓ | EV (%) ↑ | Sensors |
 |---|---:|---:|---:|
-| **A3** | **0.0696** | **0.9568** | 68.3 |
-| A2 | 0.1099 | 0.8957 | 68.4 |
-| Isotropic baseline | 0.1123 | 0.8911 | 68.2 |
-| Random | 0.1841 | 0.7076 | 78.4 |
+| **A3** | **0.0696** | **95.68** | 68.3 |
+| A2 | 0.1099 | 89.57 | 68.4 |
+| Isotropic baseline | 0.1123 | 89.11 | 68.2 |
+| Random | 0.1841 | 70.76 | 78.4 |
 
 A3 reduces RMSE by approximately **38% relative to the isotropic baseline** under this experimental setting.
 
