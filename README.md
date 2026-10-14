@@ -2,28 +2,15 @@
 
 # Non-stationary Ocean Sensor Placement
 
-This repository explores whether richer spatial covariance models can improve differentiable sensor placement for Sea Surface Height (SSH) reconstruction.
+This repository studies covariance extensions for differentiable sensor placement in Sea Surface Height (SSH) reconstruction.
 
-Starting from the isotropic covariance model used in the original work, we study two extensions:
-
-- **A2 — global anisotropic covariance**
-- **A3 — learned non-stationary covariance geometry**
-
-The sensor-placement mechanism and reconstruction framework follow the original Gumbel-Softmax + Optimal Interpolation formulation.
-
----
-
-## Data Assimilation context
-
-The problem can be viewed as a sparse Data Assimilation problem. Given a full ocean state **u**, the learned sensor-placement operator selects a small set of observations:
+In the baseline setting, we start from a true SSH state $\mathbf{u}$. A learned Gumbel-Softmax mask selects a sparse set of observations:
 
 ```math
 \mathbf{y} = H_{\ell}\mathbf{u}
 ```
 
-where \(H_{\ell}\) is the observation operator induced by the learned sensor locations.
-
-The sparse observations are then mapped back to the full spatial domain using Optimal Interpolation:
+Optimal Interpolation then reconstructs the full state from these observations:
 
 ```math
 \hat{\mathbf{u}}
@@ -35,48 +22,33 @@ K_{oo}+\sigma_n^2 I
 \mathbf{y}
 ```
 
-where:
+where $K_{oo}$ is the covariance matrix between observed locations and $K_{*o}$ is the covariance between all grid locations and the observations.
 
-- \(K_{oo}\) is the covariance matrix between observed locations,
-- \(K_{*o}\) is the covariance matrix between all grid points and observed locations,
-- \(\sigma_n^2 I\) represents observation noise.
-
-Equivalently, the Data Assimilation mapping can be written as:
-
-```math
-\hat{\mathbf{u}} = A\mathbf{y},
-\qquad
-A =
-K_{*o}
-\left(
-K_{oo}+\sigma_n^2 I
-\right)^{-1}
-```
-
-The reconstruction therefore depends directly on the covariance matrix:
+The reconstruction therefore depends directly on the assumed spatial covariance. The original baseline uses the isotropic covariance
 
 ```math
 K_{ij}
 =
 C(\mathbf{r}_i,\mathbf{r}_j)
-```
-
-The original baseline assumes an **isotropic stationary covariance**, meaning that correlation depends only on the Euclidean distance between two locations:
-
-```math
-C(\mathbf{r}_i,\mathbf{r}_j)
 =
 \sigma_f^2
 \exp\left(
--\frac{\|\mathbf{r}_i-\mathbf{r}_j\|^2}{2L^2}
+-\frac{
+\left\|
+\mathbf{r}_i-\mathbf{r}_j
+\right\|_2^2
+}{
+2L^2
+}
 \right)
 ```
 
-This corresponds to a single learned correlation length \(L\) shared across the entire spatial domain and in every direction.
+with a single learned length scale $L$.
 
-The main question explored here is therefore:
+We study two extensions of this covariance model:
 
-> **Can the reconstruction and sensor placement improve if the covariance geometry itself is learned?**
+- **A2 — global anisotropic covariance**
+- **A3 — learned non-stationary covariance geometry**
 
 ---
 
@@ -88,22 +60,28 @@ The main question explored here is therefore:
 
 ### Isotropic baseline
 
-The original covariance uses one spatial length scale:
+The baseline uses a single spatial length scale:
 
 ```math
 C(\mathbf{r}_i,\mathbf{r}_j)
 =
 \sigma_f^2
 \exp\left(
--\frac{\|\mathbf{r}_i-\mathbf{r}_j\|^2}{2L^2}
+-\frac{
+\left\|
+\mathbf{r}_i-\mathbf{r}_j
+\right\|_2^2
+}{
+2L^2
+}
 \right)
 ```
 
-Equal-covariance contours are circles: correlation decays identically in every direction and the same geometry is used everywhere in the domain.
+Equal-covariance contours are circles: correlation decays identically in every direction and the same geometry is used everywhere.
 
 ### A2 — Global anisotropy
 
-A2 replaces the single length scale with two directional scales and a learned rotation:
+A2 introduces two directional length scales and a rotation:
 
 ```math
 \phi_{\mathrm{A2}}(\mathbf{r})
@@ -126,28 +104,30 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \phi_{\mathrm{A2}}(\mathbf{r}_i)
 -
 \phi_{\mathrm{A2}}(\mathbf{r}_j)
-\right\|^2
+\right\|_2^2
 \right)
 ```
 
-This replaces circular covariance contours with a single learned ellipse over the entire domain.
+This replaces circular covariance contours with a single learned ellipse over the whole domain.
 
 ### A3 — Non-stationary geometry
 
-A3 allows the covariance geometry itself to vary spatially by augmenting the A2 coordinates with a learned nonlinear deformation:
+A3 allows the covariance geometry to vary spatially by augmenting the A2 coordinates with a learned deformation:
 
 ```math
 \phi_{\mathrm{A3}}(\mathbf{r})
 =
-[\phi_{\mathrm{A2}}(\mathbf{r}),0,0]
+\left[
+\phi_{\mathrm{A2}}(\mathbf{r}),0,0
+\right]
 +
-g_\eta(\mathbf{r}_{\mathrm{norm}})
+g_{\eta}(\mathbf{r}_{\mathrm{norm}})
 ```
 
-with:
+with
 
 ```math
-g_\eta:\mathbb{R}^2\rightarrow\mathbb{R}^4,
+g_{\eta}:\mathbb{R}^2\rightarrow\mathbb{R}^4,
 \qquad
 2\rightarrow64\rightarrow64\rightarrow4
 ```
@@ -164,13 +144,13 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \phi_{\mathrm{A3}}(\mathbf{r}_i)
 -
 \phi_{\mathrm{A3}}(\mathbf{r}_j)
-\right\|^2
+\right\|_2^2
 \right)
 ```
 
-Unlike A2, the effective covariance geometry can now vary with position.
+Unlike A2, the effective covariance geometry can vary with position.
 
-The final layer of \(g_\eta\) is initialized to zero, so A3 starts from the A2 solution before learning the non-stationary deformation.
+The final layer of $g_{\eta}$ is initialized to zero, so A3 starts from the A2 solution before learning the non-stationary deformation.
 
 ---
 
