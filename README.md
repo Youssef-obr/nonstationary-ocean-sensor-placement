@@ -136,22 +136,6 @@ The experiment is an **idealized same-state reconstruction experiment**: optimiz
 
 The purpose of this experiment is to isolate the impact of covariance geometry on reconstruction and sensor placement.
 
----
-
-## Repository structure
-
-```text
-.
-├── README.md
-├── src/
-│   ├── GS_SSH_year.py
-│   ├── GS_SSH_year_A2_warmstart.py
-│   └── GS_SSH_year_A3_warmstart.py
-├── assets/
-│   └── covariance_geometry.jpg
-└── data/
-    └── NATL60_GulfStream_ssh.nc
-```
 
 ---
 
