@@ -7,10 +7,10 @@ This repository studies covariance extensions for differentiable sensor placemen
 In the baseline setting, we start from a true SSH state $\mathbf{u}$. A learned Gumbel-Softmax mask selects a sparse set of observations:
 
 ```math
-\mathbf{y} = H_{\ell}\mathbf{u}
+\mathbf{y}=H_{\ell}\mathbf{u}
 ```
 
-Optimal Interpolation then reconstructs the full state from these observations:
+Optimal Interpolation reconstructs the full state from these sparse observations:
 
 ```math
 \hat{\mathbf{u}}
@@ -22,13 +22,26 @@ K_{oo}+\sigma_n^2 I
 \mathbf{y}
 ```
 
-where $K_{oo}$ is the covariance matrix between observed locations and $K_{*o}$ is the covariance between all grid locations and the observations.
-
-The reconstruction therefore depends directly on the assumed spatial covariance. The original baseline uses the isotropic covariance
+The covariance matrix $K$ describes the spatial correlation between grid locations. Its individual entries are
 
 ```math
 K_{ij}
 =
+C(\mathbf{r}_i,\mathbf{r}_j)
+```
+
+where $\mathbf{r}_i$ and $\mathbf{r}_j$ are two spatial locations.
+
+From this full covariance matrix:
+
+- $K_{oo}$ contains the covariances **between the observed locations**,
+- $K_{*o}$ contains the covariances **between every grid location and the observed locations**.
+
+The reconstruction therefore depends directly on the choice of covariance function $C$.
+
+The original baseline uses the isotropic covariance
+
+```math
 C(\mathbf{r}_i,\mathbf{r}_j)
 =
 \sigma_f^2
