@@ -4,13 +4,39 @@
 
 This repository studies covariance extensions for differentiable sensor placement in Sea Surface Height (SSH) reconstruction.
 
-In the baseline setting, we start from a true SSH state $\mathbf{u}$. A learned Gumbel-Softmax mask selects a sparse set of observations:
+In the baseline setting, we start from a true SSH state $\mathbf{u}$ defined on $N$ grid points. A learned Gumbel-Softmax mask selects a subset of observed locations $\mathcal{O}$:
 
 ```math
 \mathbf{y}=H_{\ell}\mathbf{u}
 ```
 
-Optimal Interpolation reconstructs the full state from these sparse observations:
+A spatial covariance matrix $K\in\mathbb{R}^{N\times N}$ is defined over the **entire grid**, with one entry for every pair of locations:
+
+```math
+K_{ij}
+=
+C(\mathbf{r}_i,\mathbf{r}_j)
+```
+
+If $\mathcal{O}$ denotes the selected sensor locations, the two matrices used by Optimal Interpolation are simply subsets of this same matrix $K$:
+
+```math
+K_{oo}
+=
+K[\mathcal{O},\mathcal{O}]
+```
+
+contains the covariances between the observed locations, while
+
+```math
+K_{*o}
+=
+K[:,\mathcal{O}]
+```
+
+contains the covariances between **all grid locations** and the observed locations.
+
+Optimal Interpolation then reconstructs the full state as
 
 ```math
 \hat{\mathbf{u}}
@@ -22,24 +48,9 @@ K_{oo}+\sigma_n^2 I
 \mathbf{y}
 ```
 
-The covariance matrix $K$ describes the spatial correlation between grid locations. Its individual entries are
+The reconstruction therefore depends directly on the covariance function $C$ used to build $K$.
 
-```math
-K_{ij}
-=
-C(\mathbf{r}_i,\mathbf{r}_j)
-```
-
-where $\mathbf{r}_i$ and $\mathbf{r}_j$ are two spatial locations.
-
-From this full covariance matrix:
-
-- $K_{oo}$ contains the covariances **between the observed locations**,
-- $K_{*o}$ contains the covariances **between every grid location and the observed locations**.
-
-The reconstruction therefore depends directly on the choice of covariance function $C$.
-
-The original baseline uses the isotropic covariance
+The original baseline uses an isotropic covariance:
 
 ```math
 C(\mathbf{r}_i,\mathbf{r}_j)
