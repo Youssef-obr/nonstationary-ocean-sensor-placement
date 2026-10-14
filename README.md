@@ -15,7 +15,7 @@ The sensor-placement mechanism and reconstruction framework follow the original 
 
 ## Covariance extensions
 
-![Covariance geometry](assets/covariance_geometry.jpg)
+<img src="covariance_geometry.jpg" width="350">
 
 ### Isotropic baseline
 
