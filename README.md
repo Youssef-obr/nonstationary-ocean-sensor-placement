@@ -13,15 +13,55 @@ The sensor-placement mechanism and reconstruction framework follow the original 
 
 ---
 
-## Covariance extensions
+## Data Assimilation context
 
-<p align="center">
-  <img src="./assets/covariance_geometry.jpg" width="500">
-</p>
+The problem can be viewed as a sparse Data Assimilation problem. Given a full ocean state **u**, the learned sensor-placement operator selects a small set of observations:
 
-### Isotropic baseline
+```math
+\mathbf{y} = H_{\ell}\mathbf{u}
+```
 
-A single correlation length is used in every direction:
+where \(H_{\ell}\) is the observation operator induced by the learned sensor locations.
+
+The sparse observations are then mapped back to the full spatial domain using Optimal Interpolation:
+
+```math
+\hat{\mathbf{u}}
+=
+K_{*o}
+\left(
+K_{oo}+\sigma_n^2 I
+\right)^{-1}
+\mathbf{y}
+```
+
+where:
+
+- \(K_{oo}\) is the covariance matrix between observed locations,
+- \(K_{*o}\) is the covariance matrix between all grid points and observed locations,
+- \(\sigma_n^2 I\) represents observation noise.
+
+Equivalently, the Data Assimilation mapping can be written as:
+
+```math
+\hat{\mathbf{u}} = A\mathbf{y},
+\qquad
+A =
+K_{*o}
+\left(
+K_{oo}+\sigma_n^2 I
+\right)^{-1}
+```
+
+The reconstruction therefore depends directly on the covariance matrix:
+
+```math
+K_{ij}
+=
+C(\mathbf{r}_i,\mathbf{r}_j)
+```
+
+The original baseline assumes an **isotropic stationary covariance**, meaning that correlation depends only on the Euclidean distance between two locations:
 
 ```math
 C(\mathbf{r}_i,\mathbf{r}_j)
@@ -32,11 +72,38 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \right)
 ```
 
-Equal-covariance contours are circles.
+This corresponds to a single learned correlation length \(L\) shared across the entire spatial domain and in every direction.
+
+The main question explored here is therefore:
+
+> **Can the reconstruction and sensor placement improve if the covariance geometry itself is learned?**
+
+---
+
+## Covariance extensions
+
+<p align="center">
+  <img src="./assets/covariance_geometry.jpg" width="500">
+</p>
+
+### Isotropic baseline
+
+The original covariance uses one spatial length scale:
+
+```math
+C(\mathbf{r}_i,\mathbf{r}_j)
+=
+\sigma_f^2
+\exp\left(
+-\frac{\|\mathbf{r}_i-\mathbf{r}_j\|^2}{2L^2}
+\right)
+```
+
+Equal-covariance contours are circles: correlation decays identically in every direction and the same geometry is used everywhere in the domain.
 
 ### A2 — Global anisotropy
 
-We replace the single length scale with two directional scales and a rotation:
+A2 replaces the single length scale with two directional scales and a learned rotation:
 
 ```math
 \phi_{\mathrm{A2}}(\mathbf{r})
@@ -63,11 +130,11 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \right)
 ```
 
-This gives one learned covariance ellipse over the entire domain.
+This replaces circular covariance contours with a single learned ellipse over the entire domain.
 
 ### A3 — Non-stationary geometry
 
-A3 augments the A2 coordinates with a learned nonlinear spatial deformation:
+A3 allows the covariance geometry itself to vary spatially by augmenting the A2 coordinates with a learned nonlinear deformation:
 
 ```math
 \phi_{\mathrm{A3}}(\mathbf{r})
@@ -85,7 +152,7 @@ g_\eta:\mathbb{R}^2\rightarrow\mathbb{R}^4,
 2\rightarrow64\rightarrow64\rightarrow4
 ```
 
-The covariance is then:
+The covariance becomes:
 
 ```math
 C(\mathbf{r}_i,\mathbf{r}_j)
@@ -101,7 +168,7 @@ C(\mathbf{r}_i,\mathbf{r}_j)
 \right)
 ```
 
-Unlike A2, the effective covariance geometry can vary with position.
+Unlike A2, the effective covariance geometry can now vary with position.
 
 The final layer of \(g_\eta\) is initialized to zero, so A3 starts from the A2 solution before learning the non-stationary deformation.
 
@@ -137,7 +204,6 @@ For each selected day:
 The experiment is an **idealized same-state reconstruction experiment**: optimization and evaluation use the same underlying SSH state, following the baseline experimental setting.
 
 The purpose of this experiment is to isolate the impact of covariance geometry on reconstruction and sensor placement.
-
 
 ---
 
